@@ -6,6 +6,7 @@ on:
       - develop
       - 'release/**'
 
+
 env:
   AWS_REGION: ap-south-1
   EKS_CLUSTER_NAME: game-2048
