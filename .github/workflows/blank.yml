@@ -1,17 +1,47 @@
-workflow "CICD Workflow" {
-  on = "push"
-  resolves = ["SNS Notification"]
-}
+name: Deploy
 
-action "ECR Login" {
-  needs: ["Build Image"]
-  env = {
-    AWS_DEFAULT_REGION = "ap-south-1"
-    AWS_REGION = "$AWS_DEFAULT_REGION"
-  }
-  runs = ["/bin/sh", "-c", "aws ecr get-login --no-include-email | sh"]
-  secrets = [
-    "AWS_ACCESS_KEY_ID",
-    "AWS_SECRET_ACCESS_KEY",
-  ]
-}
+on:
+  push:
+    branches:
+      - develop
+      - 'release/**'
+
+env:
+  AWS_REGION: ap-south-1
+  EKS_CLUSTER_NAME: game-2048
+  # The value for "context" variable in project-level "garden.yml" for AWS
+  # This could be identical to EKS_CLUSTER_NAME, or different if your local KUBECONFIG has an alias,
+  # such as when creating clusters with eksctl
+  #
+  # Example:
+  #   - name: kubernetes
+  #   environments: [aws]
+  #   context: my-eks-cluster
+  #
+  # This is due to this line:
+  # aws eks update-kubeconfig --region ${aws_region} --name ${cluster_name} --alias ${kubeconfig_cluster_name}
+  # As EKS clusters come with default names like "arn:aws:eks:us-east-2:123098607654:cluster/my-cluster"
+  # So you may have either aliased it in KUBECONFIG and your "garden.yml", or created with eksctl which gives different names
+  KUBECONFIG_CLUSTER_NAME: game-2048
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Deploy
+        uses: GavinRay97/garden-eks-deploy-action@v1.0
+        env:
+          aws_access_key_id: AKIAQDLEQGJPCQ6W6ACJ
+          aws_secret_access_key: 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
+          aws_region: ap-south-1
+          cluster_name: game-2048
+          kubeconfig_cluster_name: game-2048
+ #       with:
+          # CD to the location of your project-level "garden.yml", if it's not in root
+          # Export KUBECONFIG
+          # Run the deploy
+ #         args: |
+ #           cd app
+ #           export KUBECONFIG=/github/home/.kube/config
+ #           garden deploy --env=aws
